@@ -1,0 +1,190 @@
+---
+title: "Leaflet_football_clubs"
+author: "Simon Larsen and Jesper Jensen"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Introduction
+In our project, we have chosen to create a map showing the locations of the 25 largest football clubs in Denmark. Our selection is based on which league the respective clubs will play in during the 2025/26 season. On this basis, we have included the 24 clubs competing in Denmark’s two top leagues—the Superliga and the 1st Division—plus Skive IK from the 2nd Division, Denmark’s third-highest tier. We included Skive IK because it is our childhood club, and adding it also brings the total to a round number.
+In our spreadsheet, we have listed the following information about the 25 clubs: the club’s name, the name of its stadium, and the league in which the club competes. For the club’s specific location, we used the location of its stadium and recorded the corresponding longitude and latitude coordinates.
+
+
+
+########################################  TASK NUMBER ONE
+
+
+# Task 1: Create a Danish equivalent of AUSmap with Esri layers, 
+# but call it DANmap. You will need it layer as a background for Danish data points.
+```{r}
+
+library(tidyverse)
+library(googlesheets4)
+library(leaflet)
+
+esri <- grep("^Esri", providers, value = TRUE)
+
+
+DANmap<- leaflet() %>%   # Creates a new empty Leaflet map object
+  setView( 10.85089,55.2339084, zoom = 6.25) %>% # Sets the initial map center and zoom level over Denmark
+  addTiles() # Adds the defaultOpenStreetMap background layer
+
+
+
+
+ DANmap1<- DANmap %>%
+  addLayersControl(baseGroups = names(esri), # Adds a menu that lets the user switch between Esri basemap layers
+                   options = layersControlOptions(collapsed = FALSE)) %>% # Keeps the layer menu expanded by default
+  addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,# Displays a small minimap in the bottom‑right corner
+             position = "bottomright") %>%
+  addMeasure(
+    position = "bottomleft", # Places the measurement tool in the bottom‑left corner
+    primaryLengthUnit = "meters",# Measures distances in meters
+    primaryAreaUnit = "sqmeters",# Measures areas in square meters
+    activeColor = "#3D535D",# Color used while a measurement is active
+    completedColor = "#7D4479") %>% # Color used when a measurement is completed
+  htmlwidgets::onRender(" # Adds JavaScript that syncs the minimap with the selected basemap
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }") %>% 
+  addControl("", position = "topright") # Adds an empty control box (used for layout spacing)
+
+
+ DANmap1
+``` 
+ 
+
+
+
+######################################## TASK TWO
+
+
+# Task 2: Read in the googlesheet data you and your colleagues created
+# into your DANmap object (with multiple background layers you created in Task 1).
+
+# Solution
+```{r}
+# Libraries
+install.packages("googlesheets4")
+library(tidyverse)  # Loads tidyverse packages for data handling and analysis
+library(googlesheets4) # Enables reading data directly from Google Sheets
+library(leaflet) # Loads Leaflet for creating interactive maps
+
+
+
+football_stadiums <- read_sheet( # Reads a Google Sheet into an R dataframe
+  "https://docs.google.com/spreadsheets/d/1EcYYLqle10mE7E8Rbw1HfFMo0y7HX5HPJjb6hwNl0nw",
+  sheet = "Sheet1", # Specifies which sheet to import
+  col_types = "cccnnc" # Defines column types: 3 character, 2 numeric, 1 character
+)
+
+
+
+glimpse(football_stadiums) 
+
+
+football_stadiums %>% # Starts a pipeline using the dataset
+  filter(!is.na(Longitude)) %>% # Removes rows where longitude is missing
+  filter(!is.na(Latitude)) # Removes rows where latitude is missing
+
+
+football_stadiums <- football_stadiums |> # Continues working with the dataset
+  dplyr::rename(  # Renames columns to temporarily store incorrect coordinates
+    WrongLat = Latitude, # Saves incorrect latitude values
+    WrongLon = Longitude # Saves incorrect longitude values
+  ) |> 
+  dplyr::mutate( # Creates corrected coordinate columns
+    Latitude = WrongLon, # Swaps longitude into latitude
+    Longitude = WrongLat # Swaps latitude into longitude
+  )
+
+
+
+leaflet(football_stadiums) %>% # Initializes a Leaflet map using the dataset
+  addTiles() %>% # Adds the default OpenStreetMap background
+  addMarkers( # Adds markers for each football club
+    lng = ~Longitude, # Uses longitude for marker placement
+    lat = ~Latitude, # Uses latitude for marker placement
+    popup = ~paste0(  # Defines popup text shown when clicking a marker
+      "<b>", Club, "</b><br>",  # Displays club name in bold
+      "Stadium: ", Stadium, "<br>", # Shows stadium name
+      "League: ", League # Shows league name
+    )
+  )
+```
+
+######################################## TASK THREE
+
+# Task 3: Can you cluster the points in Leaflet?
+# Hint: Google "clustering options in Leaflet in R"
+
+# Solution
+```{r}
+leaflet(football_stadiums) %>% # Creates a Leaflet map with clustering
+  addTiles() %>%  # Adds the standard background map
+  addMarkers( # Adds markers for all clubs
+    lng = ~Longitude, # Longitude for marker placement
+    lat = ~Latitude, # Latitude for marker placement
+    popup = ~paste0( # Popup text for each marker
+      "<b>", Club, "</b><br>", # Club name in bold
+      "Stadium: ", Stadium, "<br>", # Stadium name
+      "League: ", League # League name
+    ),
+    clusterOptions = markerClusterOptions() # Enables clustering to group nearby markers
+  )
+  
+```
+######################################## TASK FOUR
+
+# Task 4: Look at the two maps (with and without clustering) and consider what
+# each is good for and what not.
+"The map with clustering is more pleasing to the eye,
+because it reduces visual clutter and prevents markers from overlapping in areas
+where many football clubs are located close together.
+This creates a cleaner and more readable national overview,
+especially in regions like Copenhagen or Aarhus where several clubs are concentrated.
+However, clustering also requires the user to interact with the map
+by zooming in to reveal the precise locations of individual stadiums.
+In general, clustering is a strong choice when the goal is to present a large dataset
+without overwhelming the viewer. It highlights regional patterns and makes the map
+look more structured and professional. On the downside, clustering can hide
+important details until the user zooms in, which means that exact stadium positions
+are not immediately visible. For analytical tasks where precision matters,
+a non‑clustered map may therefore be more appropriate, while clustering excels
+when clarity and visual simplicity are the main priorities."
+
+
+
+######################################## TASK FIVE
+
+# Task 5: Find out how to display the notes and classifications column in the map. 
+# Hint: Check online help in sites such as 
+# https://r-charts.com/spatial/interactive-maps-leaflet/#popup
+
+# Solution
+```{r}
+leaflet(football_stadiums) %>%  # Creates a Leaflet map including notes
+  addTiles() %>% # Adds the default map tiles
+  addMarkers( # Adds markers for each club
+    lng = ~Longitude, # Longitude for marker placement
+    lat = ~Latitude, # Latitude for marker placement
+    popup = ~paste0( # Popup text including additional information
+      "<b>", Club, "</b><br>", # Club name in bold
+      "Stadium: ", Stadium, "<br>", # Stadium name
+      "League: ", League, "<br>", # League name
+      "Notes: ", Notes, "<br>" # Adds the notes column to the popup
+    ),
+    clusterOptions = markerClusterOptions() # Enables clustering for cleaner visualization
+  )
+
+```
+######################################## CONGRATULATIONS - YOU ARE DONE :)
