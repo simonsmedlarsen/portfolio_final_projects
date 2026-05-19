@@ -1,0 +1,442 @@
+---
+title: "Final project"
+author: "Simon Larsen and Jesper Jensen"
+date: "2026-05-19"
+output: html_document
+---
+
+The first thing we did was opening a new r/project ans creating a folder named "data".
+We put the data in the data-folder.
+
+
+Inserte data using the Read.csv2 function.
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+
+data <- read.csv2("data/Votersupport.csv")
+
+library(tidyverse)
+
+data <- data %>%
+  mutate(
+    Venstre = as.numeric(Venstre)
+  )
+```
+
+ A new dataset is created for the more advanced graph.
+ valg_nr gives each election a number based on its order in the dataset.
+ This number is used to draw the smooth development curve.
+ Year is changed into a factor so all elections have equal spacing on the x-axis.
+
+```{r}
+data_plot <- data %>%
+  mutate(
+    valg_nr = row_number(),
+    Year = factor(Year, levels = Year)
+  )
+
+#The mutate function is used to insure that the colums are seen af numerical by R
+data <- data %>%
+  mutate(
+    Year = as.numeric(Year),
+    Venstre = as.numeric(Venstre)
+  )
+
+# Venstre
+ggplot(data_plot, aes(x = Year, y = Venstre)) +      # Starts the graph using data_plot. Year is on the x-axis, and Venstre's voter support is on the y-axis.
+  
+  geom_col(fill = "#005BAA", width = 0.7) +          # Creates blue bars. Each bar shows Venstre's voter support for one election year.
+  
+  geom_smooth(                                       # Adds a smooth development curve to show the overall trend.
+    aes(x = valg_nr, y = Venstre, group = 1),         # Uses valg_nr so each election has equal distance, instead of using the real distance between years.
+    method = "loess",                                # Uses a LOESS smooth curve to show the general development.
+    se = FALSE,                                      # Removes the grey uncertainty area around the smooth curve.
+    color = "black",                                 # Makes the smooth curve black.
+    linewidth = 1.2                                  # Makes the smooth curve thicker and easier to see.
+  ) +
+  
+  geom_point(color = "black", size = 2.5) +          # Adds black points to show the exact result for each election.
+  
+  geom_text(                                         # Adds text labels above the bars.
+    aes(label = paste0(Venstre, "%")),                # Writes the Venstre value followed by a percent sign, for example 23.3%.
+    vjust = -0.6,                                    # Moves the text slightly above the bars.
+    size = 3                                         # Sets the size of the text labels.
+  ) +
+  
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +  # Adds percent signs to the y-axis labels.
+  
+  labs(                                              # Adds the title, subtitle, and axis labels.
+    title = "Venstre's voter support since 1973",     # Main title of the graph.
+    subtitle = "Bars show election results, smooth line shows overall development", # Explains what the bars and line show.
+    x = "Year",                                      # Label for the x-axis.
+    y = "Voter support"                              # Label for the y-axis.
+  ) +
+  
+  theme_minimal(base_size = 13) +                    # Gives the graph a clean design and makes the text slightly larger.
+  
+  theme(                                             # Adjusts the visual appearance of the graph.
+    plot.title = element_text(face = "bold", size = 16), # Makes the title bold and larger.
+    plot.subtitle = element_text(size = 11),          # Sets the size of the subtitle.
+    axis.text.x = element_text(angle = 45, hjust = 1), # Rotates the year labels so they are easier to read.
+    panel.grid.minor = element_blank()                # Removes minor grid lines to make the graph less cluttered.
+  )
+```
+
+```{r}
+# Social Democrats
+data_plot <- data %>%
+  mutate(
+    valg_nr = row_number(),
+    Year = factor(Year, levels = Year),
+    Social.Democrats = as.numeric(Social.Democrats)
+  )
+
+ggplot(data_plot, aes(x = Year, y = `Social.Democrats`)) +
+  geom_col(fill = "#C8102E", width = 0.7) +
+  geom_smooth(aes(x = valg_nr, y = `Social.Democrats`, group = 1), 
+              method = "loess", 
+              se = FALSE, 
+              color = "black", 
+              linewidth = 1.2) +
+  geom_point(color = "black", size = 2.5) +
+  geom_text(aes(label = paste0(`Social.Democrats`, "%")), 
+            vjust = -0.6, 
+            size = 3) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Social Democrats' voter support since 1973",
+    subtitle = "Bars show election results, smooth line shows overall development",
+    x = "Year",
+    y = "Voter support"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 11),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+```{r}
+
+# Conservatives
+data_plot <- data %>%
+  mutate(
+    valg_nr = row_number(),
+    Year = factor(Year, levels = Year),
+    Conservatives = as.numeric(Conservatives)
+  )
+
+ggplot(data_plot, aes(x = Year, y = Conservatives)) +
+  geom_col(fill = "#006400", width = 0.7) +
+  geom_smooth(aes(x = valg_nr, y = Conservatives, group = 1), 
+              method = "loess", 
+              se = FALSE, 
+              color = "black", 
+              linewidth = 1.2) +
+  geom_point(color = "black", size = 2.5) +
+  geom_text(aes(label = paste0(Conservatives, "%")), 
+            vjust = -0.6, 
+            size = 3) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Conservatives' voter support since 1973",
+    subtitle = "Bars show election results, smooth line shows overall development",
+    x = "Year",
+    y = "Voter support"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 11),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+```{r}
+#Development of voter support for the three traditional Danish Prime Minister Parties Since 1973
+
+data <- data %>%
+  mutate(
+    Venstre = as.numeric(Venstre),
+    Social.Democrats = as.numeric(Social.Democrats),
+    Conservatives = as.numeric(Conservatives)
+  )
+
+data_long <- data %>%                                      # Creates a new dataset called data_long based on the original data.
+  
+  pivot_longer(                                            # Changes the data from wide format to long format.
+    cols = c(Venstre, Social.Democrats, Conservatives),     # Selects the three party columns that should be combined.
+    names_to = "Party",                                    # Creates a new column called Party, which stores the party names.
+    values_to = "Voter_support"                            # Creates a new column called Voter_support, which stores the percentage values.
+  ) %>%
+  
+  mutate(                                                  # Changes or creates variables in the dataset.
+    Year = factor(Year, levels = unique(Year))              # Makes Year a factor so each election year gets equal spacing on the x-axis.
+  )
+
+
+ggplot(data_long, aes(x = Year, y = Voter_support, color = Party, group = Party)) +  # Starts the graph using data_long. Year is on the x-axis, voter support is on the y-axis, and each party gets its own color and line.
+  
+  geom_line(linewidth = 1.3) +                              # Draws a line for each party to show the development in voter support over time.
+  
+  geom_point(size = 2.5) +                                  # Adds points to the lines so the exact election results are easier to see.
+  
+  scale_color_manual(                                      # Manually chooses the colors for the three parties.
+    values = c(
+      "Venstre" = "#005BAA",                                # Gives Venstre the same blue color as before.
+      "Social.Democrats" = "#C8102E",                       # Gives the Social Democrats the same red color as before.
+      "Conservatives" = "#006400"                           # Gives the Conservatives the same dark green color as before.
+    ),
+    labels = c(
+      "Venstre",                                           # Shows Venstre as its label in the legend.
+      "Social Democrats",                                  # Shows Social Democrats as its label in the legend.
+      "Conservatives"                                      # Shows Conservatives as its label in the legend.
+    )
+  ) +
+  
+  scale_y_continuous(labels = function(x) paste0(x, "%")) + # Adds percent signs to the y-axis labels.
+  
+  labs(                                                    # Adds the title, subtitle, axis labels, and legend title.
+    title = "Voter support for Venstre, Social Democrats and Conservatives since 1973", # Main title of the graph.
+    subtitle = "The graph compares the development in voter support across elections",  # Explains what the graph shows.
+    x = "Year",                                           # Label for the x-axis.
+    y = "Voter support",                                  # Label for the y-axis.
+    color = "Party"                                       # Title for the legend.
+  ) +
+  
+  theme_minimal(base_size = 13) +                          # Gives the graph a clean design and makes the general text size 13.
+  
+  theme(                                                   # Adjusts the visual design of the graph.
+    plot.title = element_text(face = "bold", size = 16),    # Makes the title bold and sets the title size to 12.
+    plot.subtitle = element_text(size = 11),                # Sets the subtitle size to 11.
+    axis.text.x = element_text(angle = 45, hjust = 1),      # Rotates the year labels so they are easier to read.
+    panel.grid.minor = element_blank(),                     # Removes minor grid lines to make the graph less cluttered.
+    legend.position = "bottom"                              # Places the legend below the graph.
+  )
+
+```
+
+
+```{r}
+#Indexed Development of Voter Support for Danish Prime Minister Parties (1973 = 100)
+
+data_index <- data %>%
+  mutate(
+    Year = as.numeric(Year),
+    Venstre = as.numeric(Venstre),
+    Social.Democrats = as.numeric(Social.Democrats),
+    Conservatives = as.numeric(Conservatives)
+  ) %>%
+  
+  # Convert the data from wide format to long format
+  pivot_longer(
+    cols = c(Venstre, Social.Democrats, Conservatives),
+    names_to = "Party",
+    values_to = "Voter_support"
+  ) %>%
+  
+  # Calculate index numbers.
+  # For each party, the value in 1973 is set to index 100.
+  # Later values show how much the party has increased or decreased compared to 1973.
+  group_by(Party) %>%
+  mutate(
+    Index = Voter_support / Voter_support[Year == 1973] * 100
+  ) %>%
+  ungroup() %>%
+  
+  # Make Year a factor so all election years have equal spacing
+  mutate(
+    Year = factor(Year, levels = unique(Year))
+  )
+
+
+# Bar chart with index numbers
+ggplot(data_index, aes(x = Year, y = Index, fill = Party)) +
+  
+  # Creates grouped bars, one for each party in each election year
+  geom_col(position = "dodge", width = 0.75) +
+  
+  # Uses the same party colors as before
+  scale_fill_manual(
+    values = c(
+      "Venstre" = "#005BAA",
+      "Social.Democrats" = "#C8102E",
+      "Conservatives" = "#006400"
+    ),
+    labels = c(
+      "Conservatives",
+      "Social Democrats",
+      "Venstre"
+    )
+  ) +
+  
+  # Adds a horizontal line at index 100 to show the 1973 baseline
+  geom_hline(yintercept = 100, linetype = "dashed", color = "black") +
+  
+  labs(
+    title = "Indexed voter support for Venstre, Social Democrats and Conservatives",
+    subtitle = "Index 100 = voter support in 1973",
+    x = "Year",
+    y = "Index",
+    fill = "Party"
+  ) +
+  
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 11),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom"
+  )
+
+```
+```{r}
+#Number of Parties Passing the 2 Percent Threshold in Danish General Elections Since 1973
+
+# Loads the package needed for importing data, working with data, and making graphs.
+library(readr)
+
+
+data_all_party <- read_delim(                              # Creates a dataset called data_all_party by importing the CSV file.
+  "data/Folketing_votersupport.csv",                       # Tells R where the CSV file is located.
+  delim = ";",                                             # Tells R that the columns in the CSV file are separated by semicolons.
+  locale = locale(                                         # Controls how R should read numbers and special characters.
+    decimal_mark = ".",                                    # Tells R that decimals use a dot, for example 12.5.
+    encoding = "Latin1"                                    # Helps R read Danish letters and special characters correctly.
+  )
+)
+
+
+data_parties_2pct <- data_all_party %>%                    # Creates a new dataset based on the imported election data.
+  
+  mutate(                                                  # Creates a new variable in the dataset.
+    Number_of_parties_2pct_or_more =                       # Names the new variable, which stores the number of parties with 2 percent or more.
+      rowSums(                                             # Counts how many TRUE values there are in each row.
+        select(., -1) >= 2,                                # Selects all party columns except the first column and checks if each party has 2 percent or more.
+        na.rm = TRUE                                       # Ignores NA values.
+      )
+  ) %>%
+  
+  mutate(                                                  # Changes or creates variables in the dataset.
+    Election = factor(.[[1]], levels = unique(.[[1]]))      # Uses the first column as election year/category.
+  )
+
+
+ggplot(data_parties_2pct, aes(x = Election, y = Number_of_parties_2pct_or_more)) +     # Starts the graph using data_parties_2pct. Elections are on the x-axis, and the number of parties is on the y-axis.
+  
+  geom_col(fill = "magenta") +                              # Makes a bar chart and colors the bars magenta.
+  
+  scale_y_continuous(                                       # Controls how the y-axis is shown.
+    breaks = seq(                                           # Creates the numbers shown on the y-axis.
+      0,                                                    # Starts the y-axis labels at 0.
+      max(data_parties_2pct$Number_of_parties_2pct_or_more),# Ends the y-axis labels at the highest number of parties in the dataset.
+      by = 1                                                # Makes the y-axis increase by whole numbers.
+    )
+  ) +
+  
+  labs(                                                     # Adds the title, subtitle, and axis labels.
+    title = "Number of Parties with 2 Percent or More in Danish General Elections Since 1973", # Main title of the graph.
+    subtitle = "The graph shows how many parties reached at least 2 percent in each election", # Explains what the graph shows.
+    x = "General election",                                # Label for the x-axis.
+    y = "Number of parties with 2 percent or more"          # Label for the y-axis.
+  ) +
+  
+  theme_minimal(base_size = 13) +                           # Gives the graph a clean design and makes the general text size 13.
+  
+  theme(                                                    # Adjusts the visual design of the graph.
+    plot.title = element_text(face = "bold", size = 12),    # Makes the title bold and sets the title size to 12.
+    plot.subtitle = element_text(size = 11),                # Sets the subtitle size to 11.
+    axis.text.x = element_text(angle = 45, hjust = 1),      # Rotates the election labels so they are easier to read.
+    panel.grid.minor = element_blank()                      # Removes minor grid lines to make the graph less cluttered.
+  )
+
+```
+```{r}
+#Development in Voter Support for Old Prime Minister Parties and Other Parties (1973–2022)
+
+data_all_party <- read_delim(                              # Creates a dataset called data_all_party by importing the CSV file.
+  "data/Folketing_votersupport.csv",                       # Tells R where the CSV file is located.
+  delim = ";",                                             # Tells R that the columns in the CSV file are separated by semicolons.
+  locale = locale(                                         # Controls how R should read numbers and special characters.
+    decimal_mark = ".",                                    # Tells R that decimals use a dot, for example 12.5.
+    encoding = "Latin1"                                    # Helps R read Danish letters and special characters correctly.
+  )
+)
+
+data_development <- data_all_party %>%                     # Creates a new dataset based on the original election data.
+  
+  mutate(                                                  # Creates new variables in the dataset.
+    
+    Year = factor(data_all_party[[1]],                     # Creates a Year variable from the first column in the dataset.
+                  levels = unique(data_all_party[[1]])),   # Keeps the election years in the same order as in the dataset.
+    
+    Old_PM_parties =                                       # Creates a variable for the three old prime minister parties.
+      Socialdemokratiet + Venstre + `Det Konservative Folkeparti`, # Adds Social Democrats, Venstre and Conservatives together.
+    
+    Other_parties =                                        # Creates a variable for all other parties.
+      rowSums(                                             # Adds values across columns in each row.
+        select(
+          .,
+          -1,
+          -Socialdemokratiet,
+          -Venstre,
+          -`Det Konservative Folkeparti`
+        ),                                                 # Selects all party columns except year and the three old parties.
+        na.rm = TRUE                                       # Ignores NA values, because NA means the party did not stand in that election.
+      )
+  ) %>%
+  
+  select(Year, Old_PM_parties, Other_parties) %>%           # Keeps only the variables needed for the graph.
+  
+  pivot_longer(                                            # Changes the data from wide format to long format.
+    cols = c(Old_PM_parties, Other_parties),                # Selects the two columns that should become lines in the graph.
+    names_to = "Party_group",                              # Creates a new column with the group names.
+    values_to = "Voter_support"                            # Creates a new column with the voter support values.
+  )
+
+
+ggplot(data_development, aes(x = Year, y = Voter_support, color = Party_group, group = Party_group)) + # Starts the graph.
+  
+  geom_line(linewidth = 1.3) +                              # Draws a line for each party group to show the development over time.
+  
+  geom_point(size = 2.5) +                                  # Adds points so each election result is easier to see.
+  
+  scale_color_manual(                                      # Manually chooses the colors for the two lines.
+    values = c(
+      "Old_PM_parties" = "magenta",                         # Gives the old prime minister parties a magenta line.
+      "Other_parties" = "steelblue"                         # Gives the other parties a blue line.
+    ),
+    labels = c(
+      "Social Democrats, Venstre and Conservatives",        # Label for the old prime minister parties.
+      "All other parties"                                  # Label for all other parties.
+    )
+  ) +
+  
+  scale_y_continuous(labels = function(x) paste0(x, "%")) + # Adds percent signs to the y-axis labels.
+  
+  labs(                                                     # Adds title, subtitle, axis labels, and legend title.
+    title = "Development in Voter Support for Old Prime Minister Parties and Other Parties",
+    subtitle = "Danish general elections from 1973 to 2022",
+    x = "Year",
+    y = "Voter support",
+    color = "Party group"
+  ) +
+  
+  theme_minimal(base_size = 13) +                           # Gives the graph a clean design and makes the general text size 13.
+  
+  theme(                                                    # Adjusts the visual design of the graph.
+    plot.title = element_text(face = "bold", size = 12),    # Makes the title bold and sets the title size to 12.
+    plot.subtitle = element_text(size = 11),                # Sets the subtitle size to 11.
+    axis.text.x = element_text(angle = 45, hjust = 1),      # Rotates the year labels so they are easier to read.
+    panel.grid.minor = element_blank(),                     # Removes minor grid lines to make the graph less cluttered.
+    legend.position = "bottom"                              # Places the legend below the graph.
+  )
+
+```
